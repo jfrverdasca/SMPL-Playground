@@ -1,3 +1,5 @@
+from typing import Union
+
 from open3d.cpu.pybind.visualization import gui, rendering
 
 from constants import DEFAULT_LIGHT_POSITION
@@ -50,6 +52,9 @@ class LightControls:
 
         self._parent.add_child(Separator())
 
+        self._current_light_options_panel = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._parent.add_child(self._current_light_options_panel)
+
         self._refresh_layout()
 
     @property
@@ -74,15 +79,17 @@ class LightControls:
 
     def _on_point_light_click(self):
         light = PointLight(self._scene, position=DEFAULT_LIGHT_POSITION)
-        self._parent.add_child(light.build_gui())
+        self._current_light_options_panel.add_child(light.build_gui())
 
         self._lights[light.name] = light
+        self._select_light(light.name)
 
     def _on_spot_light_click(self):
         light = SpotLight(self._scene, position=DEFAULT_LIGHT_POSITION)
-        self._parent.add_child(light.build_gui())
+        self._current_light_options_panel.add_child(light.build_gui())
 
         self._lights[light.name] = light
+        self._select_light(light.name)
 
     def _on_selected_light_change(self, text, idx):
         if text in self._lights:
@@ -107,7 +114,7 @@ class LightControls:
 
         self._refresh_layout()
 
-    def _refresh_light_combobox(self, selected_light_name: str):
+    def _refresh_light_combobox(self, selected_light_name: Union[str, None]):
         self._lights_combobox.clear_items()
         for i, (name, light) in enumerate(self._lights.items()):
             self._lights_combobox.add_item(name)
@@ -118,6 +125,7 @@ class LightControls:
     def _select_light(self, name: str):
         if not name or name not in self._lights:
             self._current_light = None
+            self._refresh_light_combobox(None)
             return
 
         if self._current_light:
@@ -131,10 +139,12 @@ class LightControls:
                 self._current_light.marker.set_color(self._current_light.color)
 
         self._current_light = self._lights[name]
-        self._current_light.set_marker_color(self.SELECTED_LIGHT_MARKER_COLOR)
+        self._current_light.marker.set_color(self.SELECTED_LIGHT_MARKER_COLOR)
 
-        if not self._current_light.controls_group:
-            self._current_light.build_gui(self._parent)
+        # if not self._current_light.controls_group:
+        #   self._current_light_options_panel.add_child(self._current_light.build_gui())
+
+        self._refresh_light_combobox(self._current_light.name)
         self._refresh_layout()
 
     def _refresh_layout(self):

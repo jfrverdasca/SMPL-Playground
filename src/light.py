@@ -372,7 +372,7 @@ class SpotLight(PointLight):
         self._update()
 
     def build_gui(self):
-        self._controls_group.add_child(super().build_gui())
+        self._controls_group = super().build_gui()
 
         self._controls_group.add_child(gui.Label("Yaw"))
         yaw_slider = gui.Slider(gui.Slider.DOUBLE)

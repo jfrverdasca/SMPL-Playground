@@ -2,11 +2,7 @@ from typing import Dict, Union
 
 from open3d.visualization import gui, rendering
 
-from constants import DEFAULT_LIGHT_POSITION
 from gui.controls import LightControls, SMPLControls
-from light import SpotLight
-from model import Model
-from src.light import Light, PointLight, Sun
 
 
 class SMPLPlayground:
