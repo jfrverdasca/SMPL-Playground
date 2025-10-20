@@ -55,6 +55,8 @@ class SMPLPlayground:
         )
 
     def _refresh_layout(self):
+        self._window.set_needs_layout()
+
         gui.Application.instance.post_to_main_thread(
             self._window, lambda: self._window.set_needs_layout()
         )

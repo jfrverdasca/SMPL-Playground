@@ -17,13 +17,17 @@ class LightMarker:
         self,
         scene: rendering.Scene,
         name: str,
-        position: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         radius: float = 0.01,
     ):
         self._scene = scene
         self._name = name
-        self._position = position
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._color = color
         self._radius = radius
 
@@ -36,8 +40,12 @@ class LightMarker:
         self._scene = scene
         self._update()
 
-    def set_position(self, position: Tuple[float, float, float]):
-        self._position = position
+    def set_position(self, position: Union[Tuple[float, float, float], np.ndarray]):
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._update()
 
     def set_color(self, color: Union[Tuple[float, float, float], gui.Color]):
@@ -54,7 +62,7 @@ class LightMarker:
     def _update(self):
         self._sphere = o3d.geometry.TriangleMesh.create_sphere(radius=self._radius)
         self._sphere.compute_vertex_normals()
-        self._sphere.translate(self._position)
+        self._sphere.translate(self._position.astype(float))
         self._sphere.paint_uniform_color(self._color)
 
         if not self._material:
@@ -80,15 +88,23 @@ class Light(metaclass=ABCMeta):
         self,
         scene: rendering.Scene,
         name: str = None,
+        position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
     ):
         self._scene = scene
         self._name = name if name else f"l_{uuid.uuid4().hex[:6]}"
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._color = color
         self._intensity = intensity
 
-        self._marker = LightMarker(self._scene, f"m_{self._name}", color=self._color)
+        self._marker = LightMarker(
+            self._scene, f"m_{self._name}", position, self._color
+        )
 
         self._update()
 
@@ -107,6 +123,10 @@ class Light(metaclass=ABCMeta):
     @property
     def color(self) -> Tuple[float, float, float]:
         return self._color
+
+    @property
+    def position(self) -> np.array:
+        return self._position
 
     @property
     def marker(self) -> LightMarker:
@@ -151,10 +171,10 @@ class Sun(Light, GuiComponentInterface):
         self._indirect_light_enable = indirect_light_enable
 
         # Before calling super we need to set spotlight specific attributes due to _update call
-        super().__init__(scene, "Sun", color, intensity)
+        super().__init__(scene, "Sun", color, intensity=intensity)
 
         # gui
-        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._controls_group = None
 
     def set_azimuth(self, azimuth_deg: float):
         self._azimuth_deg = azimuth_deg
@@ -173,6 +193,9 @@ class Sun(Light, GuiComponentInterface):
         self._scene.enable_indirect_light(indirect_light_enabled)
 
     def build_gui(self):
+        super().build_gui()
+
+        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
         self._controls_group.add_child(gui.Label("Sun light settings"))
         self._controls_group.add_child(Separator())
 
@@ -216,6 +239,8 @@ class Sun(Light, GuiComponentInterface):
         return self._controls_group
 
     def destroy_gui(self):
+        super().destroy_gui()
+
         if not self._controls_group:
             return
 
@@ -240,13 +265,17 @@ class PointLight(Light, GuiComponentInterface):
         self,
         scene: rendering.Scene,
         name: str = None,
-        position: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
         falloff: float = 1000.0,
         cast_shadow: bool = True,
     ):
-        self._position = np.array(position, dtype=np.float32)
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._falloff = falloff
         self._cast_shadow = cast_shadow
 
@@ -254,13 +283,17 @@ class PointLight(Light, GuiComponentInterface):
             name = f"pl_{uuid.uuid4().hex[:6]}"
 
         # Before calling super we need to set spotlight specific attributes due to _update call
-        super().__init__(scene, name, color, intensity)
+        super().__init__(scene, name, position, color, intensity)
 
         # gui
-        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._controls_group = None
 
-    def set_position(self, position: Tuple[float, float, float]):
-        self._position = position
+    def set_position(self, position: Union[Tuple[float, float, float], np.ndarray]):
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._marker.set_position(self._position)
         self._update()
 
@@ -273,7 +306,10 @@ class PointLight(Light, GuiComponentInterface):
         self._update()
 
     def build_gui(self):
-        self._controls_group.add_child(gui.Label("Point light settings"))
+        super().build_gui()
+
+        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._controls_group.add_child(gui.Label("Light settings"))
         self._controls_group.add_child(Separator())
 
         self._controls_group.add_child(gui.Label("Intensity"))
@@ -305,6 +341,13 @@ class PointLight(Light, GuiComponentInterface):
 
     def destroy_gui(self):
         super().destroy_gui()
+
+        if not self._controls_group:
+            return
+
+        for child in self._controls_group.get_children():
+            child.visible = False
+        self._controls_group = None
 
     def destroy(self):
         super().destroy()

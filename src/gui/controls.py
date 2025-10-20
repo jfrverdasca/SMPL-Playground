@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Literal, Union
 
 from open3d.cpu.pybind.visualization import gui, rendering
 
@@ -27,10 +27,10 @@ class LightControls:
 
         # Components
         self._point_light_button = gui.Button("Add point light")
-        self._point_light_button.set_on_clicked(self._on_point_light_click)
+        self._point_light_button.set_on_clicked(lambda: self._add_light("PointLight"))
 
         self._spot_light_button = gui.Button("Add spot light")
-        self._spot_light_button.set_on_clicked(self._on_spot_light_click)
+        self._spot_light_button.set_on_clicked(lambda: self._add_light("SpotLight"))
 
         self._lights_combobox = gui.Combobox()
         self._lights_combobox.set_on_selection_changed(self._on_selected_light_change)
@@ -77,19 +77,21 @@ class LightControls:
     def sun(self):
         return self._sun
 
-    def _on_point_light_click(self):
-        light = PointLight(self._scene, position=DEFAULT_LIGHT_POSITION)
+    def _add_light(self, type_: Literal["PointLight", "SpotLight"] = "PointLight"):
+        if type_ == "SpotLight":
+            light = SpotLight(self._scene, position=DEFAULT_LIGHT_POSITION)
+
+        else:
+            light = PointLight(self._scene, position=DEFAULT_LIGHT_POSITION)
+
         self._current_light_options_panel.add_child(light.build_gui())
 
         self._lights[light.name] = light
         self._select_light(light.name)
+        self._refresh_light_combobox(light.name)
 
-    def _on_spot_light_click(self):
-        light = SpotLight(self._scene, position=DEFAULT_LIGHT_POSITION)
-        self._current_light_options_panel.add_child(light.build_gui())
-
-        self._lights[light.name] = light
-        self._select_light(light.name)
+        self._lights_combobox.enabled = True
+        self._remove_light_button.enabled = True
 
     def _on_selected_light_change(self, text, idx):
         if text in self._lights:
@@ -106,12 +108,12 @@ class LightControls:
         light_name = list(self._lights.keys())[0] if self._lights else None
         if light_name:
             self._select_light(light_name)
-            self._refresh_light_combobox(light_name)
 
         else:
             self._remove_light_button.enabled = False
             self._lights_combobox.enabled = False
 
+        self._refresh_light_combobox(light_name)
         self._refresh_layout()
 
     def _refresh_light_combobox(self, selected_light_name: Union[str, None]):
@@ -120,7 +122,6 @@ class LightControls:
             self._lights_combobox.add_item(name)
             if name == selected_light_name:
                 self._lights_combobox.selected_index = i
-                self._select_light(selected_light_name)
 
     def _select_light(self, name: str):
         if not name or name not in self._lights:
@@ -141,10 +142,9 @@ class LightControls:
         self._current_light = self._lights[name]
         self._current_light.marker.set_color(self.SELECTED_LIGHT_MARKER_COLOR)
 
-        # if not self._current_light.controls_group:
-        #   self._current_light_options_panel.add_child(self._current_light.build_gui())
+        if not self._current_light.is_gui_built:
+            self._current_light_options_panel.add_child(self._current_light.build_gui())
 
-        self._refresh_light_combobox(self._current_light.name)
         self._refresh_layout()
 
     def _refresh_layout(self):
