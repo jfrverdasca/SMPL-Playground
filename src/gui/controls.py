@@ -11,6 +11,7 @@ from model import Model
 class LightControls:
 
     SELECTED_LIGHT_MARKER_COLOR = (1.0, 0.0, 0.0)
+    LIGHT_MOVE_STEP = 0.01
 
     def __init__(
         self,
@@ -37,12 +38,13 @@ class LightControls:
         self._lights_combobox.enabled = False
 
         self._remove_light_button = gui.Button("Remove light")
-        self._remove_light_button.set_on_clicked(self._on_remove_light_click)
+        self._remove_light_button.set_on_clicked(self._remove_current_light)
         self._remove_light_button.enabled = False
 
         self._parent.add_child(self._point_light_button)
         self._parent.add_child(self._spot_light_button)
         self._parent.add_child(Separator())
+        self._parent.add_child(gui.Label("Selected light:"))
         self._parent.add_child(self._lights_combobox)
         self._parent.add_child(self._remove_light_button)
         self._parent.add_child(Separator())
@@ -97,11 +99,11 @@ class LightControls:
         if text in self._lights:
             self._select_light(text)
 
-    def _on_remove_light_click(self):
+    def _remove_current_light(self):
         if not self._current_light:
             return
 
-        self._current_light.destroy_gui()
+        self._current_light.destroy()
         del self._lights[self._current_light.name]
 
         # Select first available light
@@ -115,6 +117,56 @@ class LightControls:
 
         self._refresh_light_combobox(light_name)
         self._refresh_layout()
+
+    def on_key_event_handler(self, event: gui.KeyEvent) -> bool:
+        if event.type != gui.KeyEvent.DOWN:
+            return False
+
+        key = getattr(event, "key", None)
+        if key is None:
+            return False
+
+        light_move_keys = {263, 264, 265, 266, 270, 271}
+        if key in light_move_keys:
+            self._move_current_light(key)
+            return True
+        if key in (ord("a"), ord("A")):
+            self._add_light("PointLight")
+            return True
+        if key in (ord("s"), ord("S")):
+            self._add_light("SpotLight")
+            return True
+        if key in (ord("d"), ord("D")):
+            self._remove_current_light()
+            return True
+        if key in (ord("z"), ord("Z")):
+            # TODO: select previous light
+            return True
+        if key in (ord("x"), ord("X")):
+            # TODO: select previous light
+            return True
+
+        return False
+
+    def _move_current_light(self, key: int):
+        if not self._current_light:
+            return
+
+        position = self._current_light.position
+        if key == 265:  # up
+            position[1] += self.LIGHT_MOVE_STEP
+        elif key == 263:  # left
+            position[0] -= self.LIGHT_MOVE_STEP
+        elif key == 266:  # down
+            position[1] -= self.LIGHT_MOVE_STEP
+        elif key == 264:  # right
+            position[0] += self.LIGHT_MOVE_STEP
+        elif key == 271:  # page up
+            position[2] += self.LIGHT_MOVE_STEP
+        elif key == 270:  # page down
+            position[2] -= self.LIGHT_MOVE_STEP
+
+        self._current_light.set_position(position)
 
     def _refresh_light_combobox(self, selected_light_name: Union[str, None]):
         self._lights_combobox.clear_items()

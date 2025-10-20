@@ -108,9 +108,11 @@ class Light(metaclass=ABCMeta):
 
         self._update()
 
-    @abstractmethod
     def destroy(self):
-        pass
+        self._marker.destroy()
+        self._marker = None
+
+        self._scene.remove_light(self._name)
 
     @abstractmethod
     def _update(self):
@@ -259,7 +261,7 @@ class Sun(Light, GuiComponentInterface):
 
 class PointLight(Light, GuiComponentInterface):
 
-    MAX_FALLOFF = 1000.0
+    MAX_FALLOFF = 100.0
 
     def __init__(
         self,
@@ -268,7 +270,7 @@ class PointLight(Light, GuiComponentInterface):
         position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
-        falloff: float = 1000.0,
+        falloff: float = 100.0,
         cast_shadow: bool = True,
     ):
         self._position = (
@@ -367,10 +369,8 @@ class PointLight(Light, GuiComponentInterface):
 
 class SpotLight(PointLight):
 
-    MIN_YAW = -180.0
-    MAX_YAW = 180.0
-    MIN_PITCH = -90.0
-    MAX_PITCH = 90.0
+    MAX_YAW = 360.0
+    MAX_PITCH = 360.0
     MAX_CONE_ANGLE = 1.0
 
     def __init__(
@@ -378,7 +378,7 @@ class SpotLight(PointLight):
         scene: rendering.Scene,
         name: str = None,
         position: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-        yaw: float = 0.0,
+        yaw: float = 180.0,
         pitch: float = 0.0,
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
@@ -419,14 +419,14 @@ class SpotLight(PointLight):
 
         self._controls_group.add_child(gui.Label("Yaw"))
         yaw_slider = gui.Slider(gui.Slider.DOUBLE)
-        yaw_slider.set_limits(self.MIN_YAW, self.MAX_YAW)
+        yaw_slider.set_limits(0.0, self.MAX_YAW)
         yaw_slider.double_value = self._yaw
         yaw_slider.set_on_value_changed(self.set_yaw)
         self._controls_group.add_child(yaw_slider)
 
         self._controls_group.add_child(gui.Label("Pitch"))
         pitch_slider = gui.Slider(gui.Slider.DOUBLE)
-        pitch_slider.set_limits(self.MIN_PITCH, self.MAX_PITCH)
+        pitch_slider.set_limits(0.0, self.MAX_PITCH)
         pitch_slider.double_value = self._pitch
         pitch_slider.set_on_value_changed(self.set_pitch)
         self._controls_group.add_child(pitch_slider)
