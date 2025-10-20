@@ -3,8 +3,7 @@ from typing import Dict, Union
 from open3d.visualization import gui, rendering
 
 from constants import DEFAULT_LIGHT_POSITION
-from gui.components import Button
-from gui.panels import LightsPanel, SMPLPanel
+from gui.controls import LightControls, SMPLControls
 from light import SpotLight
 from model import Model
 from src.light import Light, PointLight, Sun
@@ -28,16 +27,6 @@ class SMPLPlayground:
         self._window.add_child(self._scene_widget)
 
         self.scene = self._scene_widget.scene.scene
-
-        # Lights management
-        self._lights: Dict[str, Light] = {}
-        self._current_light: Union[Light, None] = None
-
-        # Static scene components
-        self._sun = Sun(self.scene)
-        self._smpl_model = Model(
-            self._scene_widget, model_path="./smpl", model_type="smpl"
-        )
 
         # GUI components
         self._build_gui()
@@ -82,49 +71,47 @@ class SMPLPlayground:
         self._window.add_child(self._scroll)
 
         # Options panel (Lights/SMPL)
-        self._lights_button = Button(
-            "Lights", self._toggle_lights_smpl_menu, enabled=False
-        )
-        self._smpl_button = Button("SMPL", self._toggle_lights_smpl_menu)
-        self._options_panel = gui.Horiz(2, gui.Margins(4, 4, 4, 4))
-        self._options_panel.add_child(self._lights_button)
-        self._options_panel.add_child(self._smpl_button)
-        self._panel.add_child(self._options_panel)
+        self._lights_button = gui.Button("Lights")
+        self._lights_button.set_on_clicked(self._toggle_lights_smpl_menu)
+        self._lights_button.enabled = False
+
+        self._smpl_button = gui.Button("SMPL")
+        self._smpl_button.set_on_clicked(self._toggle_lights_smpl_menu)
+
+        self._options_selector_panel = gui.Horiz(2, gui.Margins(4, 4, 4, 4))
+        self._options_selector_panel.add_child(self._lights_button)
+        self._options_selector_panel.add_child(self._smpl_button)
+        self._panel.add_child(self._options_selector_panel)
 
         # Lights panel
-        self._lights_panel = LightsPanel(2, gui.Margins(4, 4, 4, 4))
-        self._sun.build_gui(self._lights_panel)
+        self._lights_panel = gui.Vert(2, gui.Margins(4, 4, 4, 4))
+        self._lights_controls = LightControls(
+            self.scene, self._lights_panel, self._refresh_layout
+        )
         self._panel.add_child(self._lights_panel)
 
         # SMPL panel
-        self._smpl_panel = SMPLPanel(2, gui.Margins(4, 4, 4, 4))
+        self._smpl_panel = gui.Vert(2, gui.Margins(4, 4, 4, 4))
+        self._smpl_controls = SMPLControls(
+            self.scene,
+            self._smpl_panel,
+            self._refresh_layout,
+            model_path="./smpl",
+            model_type="smpl",
+        )
         self._panel.add_child(self._smpl_panel)
 
-    def _toggle_lights_smpl_menu(self, e):
+        self._scene_widget.setup_camera(
+            60, self._smpl_controls.model.bounds, self._smpl_controls.model.center
+        )
+
+    def _toggle_lights_smpl_menu(self):
         self._lights_button.enabled = not self._lights_button.enabled
         self._smpl_button.enabled = not self._smpl_button.enabled
         self._lights_panel.visible = not self._lights_panel.visible
         self._smpl_panel.visible = not self._smpl_panel.visible
 
         self._refresh_layout()
-
-    def _add_point_light(self):
-        light = PointLight(self.scene, position=DEFAULT_LIGHT_POSITION)
-        light.build_gui(self._lights_panel)
-
-        self._lights[light.name] = light
-        # self._select_light(light)  TODO: implement selection
-        # self._refresh_light_combobox(light)  TODO: implement light combobox
-
-    def _add_spot_light(self):
-        light = SpotLight(self.scene, position=DEFAULT_LIGHT_POSITION)
-        light.build_gui(self._lights_panel)
-
-        self._lights[light.name] = light
-        # self._select_light(light)  TODO: implement selection
-        # self._refresh_light_combobox(light)  TODO: implement light combobox
-
-    def _select_light(self, light_name: str): ...
 
     def _print_params_info(self): ...
 

@@ -85,8 +85,8 @@ class Model(GuiComponentInterface):
         0.300,  # 71 - fingers right left/right
     ]
 
-    def __init__(self, scene_widget, *args, **kwargs):
-        self._scene_widget = scene_widget
+    def __init__(self, scene: rendering.Scene, *args, **kwargs):
+        self._scene = scene
 
         self._model = SMPL(*args, **kwargs)
         self._pose = torch.tensor(
@@ -96,6 +96,14 @@ class Model(GuiComponentInterface):
         self._faces = self._model.faces.astype(np.int32)
 
         self._update()
+
+    @property
+    def bounds(self) -> o3d.geometry.AxisAlignedBoundingBox:
+        return self._bounds
+
+    @property
+    def center(self) -> np.ndarray:
+        return self._center
 
     def destroy_gui(self):
         pass
@@ -117,12 +125,11 @@ class Model(GuiComponentInterface):
         mesh.compute_vertex_normals()
         mesh.paint_uniform_color(self.DEFAULT_SMPL_COLOR)
 
-        bounds = mesh.get_axis_aligned_bounding_box()
-        self.center = bounds.get_center()
+        self._bounds = mesh.get_axis_aligned_bounding_box()
+        self._center = self._bounds.get_center()
 
         material = rendering.MaterialRecord()
         material.shader = "defaultLit"
         material.base_color = [*self.DEFAULT_SMPL_COLOR, 1.0]
 
-        self._scene_widget.setup_camera(60, bounds, self.center)
-        self._scene_widget.scene.add_geometry("smpl", mesh, material)
+        self._scene.add_geometry("smpl", mesh, material)
