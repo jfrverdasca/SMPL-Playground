@@ -4,13 +4,13 @@ from open3d.cpu.pybind.visualization import gui, rendering
 
 from constants import DEFAULT_LIGHT_POSITION
 from gui.components import Separator
-from light import PointLight, SpotLight, Sun
+from light import LightMarker, PointLight, SpotLight, Sun
 from model import Model
 
 
 class LightControls:
 
-    SELECTED_LIGHT_MARKER_COLOR = (1.0, 0.0, 0.0)
+    SELECTED_LIGHT_MARKER_RADIUS = 0.03
     LIGHT_MOVE_STEP = 0.01
 
     def __init__(
@@ -189,10 +189,10 @@ class LightControls:
 
             # Selected light may not exist anymore
             if self._current_light.name in self._lights:
-                self._current_light.marker.set_color(self._current_light.color)
+                self._current_light.marker.set_radius(LightMarker.DEFAULT_RADIUS)
 
         self._current_light = self._lights[name]
-        self._current_light.marker.set_color(self.SELECTED_LIGHT_MARKER_COLOR)
+        self._current_light.marker.set_radius(self.SELECTED_LIGHT_MARKER_RADIUS)
 
         if not self._current_light.is_gui_built:
             self._current_light_options_panel.add_child(self._current_light.build_gui())

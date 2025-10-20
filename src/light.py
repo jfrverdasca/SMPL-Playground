@@ -13,13 +13,15 @@ from utils import sphere_dir, yaw_pitch_to_direction
 
 class LightMarker:
 
+    DEFAULT_RADIUS = 0.01
+
     def __init__(
         self,
         scene: rendering.Scene,
         name: str,
         position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
-        radius: float = 0.01,
+        radius: float = DEFAULT_RADIUS,
     ):
         self._scene = scene
         self._name = name
@@ -201,28 +203,28 @@ class Sun(Light, GuiComponentInterface):
         self._controls_group.add_child(gui.Label("Sun light settings"))
         self._controls_group.add_child(Separator())
 
-        self._controls_group.add_child(gui.Label("Azimuth"))
+        self._controls_group.add_child(gui.Label("Azimuth:"))
         azimuth_slider = gui.Slider(gui.Slider.DOUBLE)
         azimuth_slider.set_limits(0.0, self.MAX_AZIMUTH_DEG)
         azimuth_slider.double_value = self._azimuth_deg
         azimuth_slider.set_on_value_changed(self.set_azimuth)
         self._controls_group.add_child(azimuth_slider)
 
-        self._controls_group.add_child(gui.Label("Elevation"))
+        self._controls_group.add_child(gui.Label("Elevation:"))
         elevation_slider = gui.Slider(gui.Slider.DOUBLE)
         elevation_slider.set_limits(0.0, self.MAX_ELEVATION_DEG)
         elevation_slider.double_value = self._elevation_deg
         elevation_slider.set_on_value_changed(self.set_elevation)
         self._controls_group.add_child(elevation_slider)
 
-        self._controls_group.add_child(gui.Label("Intensity"))
+        self._controls_group.add_child(gui.Label("Intensity:"))
         intensity_slider = gui.Slider(gui.Slider.DOUBLE)
         intensity_slider.set_limits(0.0, self.MAX_INTENSITY)
         intensity_slider.double_value = self._intensity
         intensity_slider.set_on_value_changed(self.set_intensity)
         self._controls_group.add_child(intensity_slider)
 
-        self._controls_group.add_child(gui.Label("Color"))
+        self._controls_group.add_child(gui.Label("Color:"))
         color_edit = gui.ColorEdit()
         color_edit.color_value = gui.Color(*self._color, 1.0)
         color_edit.set_on_value_changed(self.set_color)
@@ -314,21 +316,21 @@ class PointLight(Light, GuiComponentInterface):
         self._controls_group.add_child(gui.Label("Light settings"))
         self._controls_group.add_child(Separator())
 
-        self._controls_group.add_child(gui.Label("Intensity"))
+        self._controls_group.add_child(gui.Label("Intensity:"))
         intensity_slider = gui.Slider(gui.Slider.DOUBLE)
         intensity_slider.set_limits(0.0, self.MAX_INTENSITY)
         intensity_slider.double_value = self._intensity
         intensity_slider.set_on_value_changed(self.set_intensity)
         self._controls_group.add_child(intensity_slider)
 
-        self._controls_group.add_child(gui.Label("Falloff"))
+        self._controls_group.add_child(gui.Label("Falloff:"))
         falloff_slider = gui.Slider(gui.Slider.DOUBLE)
         falloff_slider.set_limits(0.0, self.MAX_FALLOFF)
         falloff_slider.double_value = self._falloff
         falloff_slider.set_on_value_changed(self.set_falloff)
         self._controls_group.add_child(falloff_slider)
 
-        self._controls_group.add_child(gui.Label("Color"))
+        self._controls_group.add_child(gui.Label("Color:"))
         color_edit = gui.ColorEdit()
         color_edit.color_value = gui.Color(*self._color, 1.0)
         color_edit.set_on_value_changed(self.set_color)
@@ -417,28 +419,28 @@ class SpotLight(PointLight):
     def build_gui(self):
         self._controls_group = super().build_gui()
 
-        self._controls_group.add_child(gui.Label("Yaw"))
+        self._controls_group.add_child(gui.Label("Yaw:"))
         yaw_slider = gui.Slider(gui.Slider.DOUBLE)
         yaw_slider.set_limits(0.0, self.MAX_YAW)
         yaw_slider.double_value = self._yaw
         yaw_slider.set_on_value_changed(self.set_yaw)
         self._controls_group.add_child(yaw_slider)
 
-        self._controls_group.add_child(gui.Label("Pitch"))
+        self._controls_group.add_child(gui.Label("Pitch:"))
         pitch_slider = gui.Slider(gui.Slider.DOUBLE)
         pitch_slider.set_limits(0.0, self.MAX_PITCH)
         pitch_slider.double_value = self._pitch
         pitch_slider.set_on_value_changed(self.set_pitch)
         self._controls_group.add_child(pitch_slider)
 
-        self._controls_group.add_child(gui.Label("Inner Cone Angle"))
+        self._controls_group.add_child(gui.Label("Inner Cone Angle:"))
         inner_cone_angle_slider = gui.Slider(gui.Slider.DOUBLE)
         inner_cone_angle_slider.set_limits(0.0, self.MAX_CONE_ANGLE)
         inner_cone_angle_slider.double_value = self._inner_cone_angle
         inner_cone_angle_slider.set_on_value_changed(self.set_inner_cone_angle)
         self._controls_group.add_child(inner_cone_angle_slider)
 
-        self._controls_group.add_child(gui.Label("Outer Cone Angle"))
+        self._controls_group.add_child(gui.Label("Outer Cone Angle:"))
         outer_cone_angle_slider = gui.Slider(gui.Slider.DOUBLE)
         outer_cone_angle_slider.set_limits(0.0, self.MAX_CONE_ANGLE)
         outer_cone_angle_slider.double_value = self._outer_cone_angle
