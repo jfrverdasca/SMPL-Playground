@@ -2,11 +2,7 @@ from typing import Dict, Union
 
 from open3d.visualization import gui, rendering
 
-from constants import DEFAULT_LIGHT_POSITION
 from gui.controls import LightControls, SMPLControls
-from light import SpotLight
-from model import Model
-from src.light import Light, PointLight, Sun
 
 
 class SMPLPlayground:
@@ -43,7 +39,8 @@ class SMPLPlayground:
         finally:
             self._print_params_info()
 
-    def _on_key_event(self, event: gui.KeyEvent) -> bool: ...
+    def _on_key_event(self, event: gui.KeyEvent) -> bool:
+        return self._lights_controls.on_key_event_handler(event)
 
     def _on_layout(self, context):
         content_rect = self._window.content_rect
@@ -59,6 +56,8 @@ class SMPLPlayground:
         )
 
     def _refresh_layout(self):
+        self._window.set_needs_layout()
+
         gui.Application.instance.post_to_main_thread(
             self._window, lambda: self._window.set_needs_layout()
         )

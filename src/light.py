@@ -13,17 +13,23 @@ from utils import sphere_dir, yaw_pitch_to_direction
 
 class LightMarker:
 
+    DEFAULT_RADIUS = 0.01
+
     def __init__(
         self,
         scene: rendering.Scene,
         name: str,
-        position: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
-        radius: float = 0.01,
+        radius: float = DEFAULT_RADIUS,
     ):
         self._scene = scene
         self._name = name
-        self._position = position
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._color = color
         self._radius = radius
 
@@ -36,8 +42,12 @@ class LightMarker:
         self._scene = scene
         self._update()
 
-    def set_position(self, position: Tuple[float, float, float]):
-        self._position = position
+    def set_position(self, position: Union[Tuple[float, float, float], np.ndarray]):
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._update()
 
     def set_color(self, color: Union[Tuple[float, float, float], gui.Color]):
@@ -54,7 +64,7 @@ class LightMarker:
     def _update(self):
         self._sphere = o3d.geometry.TriangleMesh.create_sphere(radius=self._radius)
         self._sphere.compute_vertex_normals()
-        self._sphere.translate(self._position)
+        self._sphere.translate(self._position.astype(float))
         self._sphere.paint_uniform_color(self._color)
 
         if not self._material:
@@ -80,21 +90,31 @@ class Light(metaclass=ABCMeta):
         self,
         scene: rendering.Scene,
         name: str = None,
+        position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
     ):
         self._scene = scene
         self._name = name if name else f"l_{uuid.uuid4().hex[:6]}"
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._color = color
         self._intensity = intensity
 
-        self._marker = LightMarker(self._scene, f"m_{self._name}", color=self._color)
+        self._marker = LightMarker(
+            self._scene, f"m_{self._name}", position, self._color
+        )
 
         self._update()
 
-    @abstractmethod
     def destroy(self):
-        pass
+        self._marker.destroy()
+        self._marker = None
+
+        self._scene.remove_light(self._name)
 
     @abstractmethod
     def _update(self):
@@ -107,6 +127,10 @@ class Light(metaclass=ABCMeta):
     @property
     def color(self) -> Tuple[float, float, float]:
         return self._color
+
+    @property
+    def position(self) -> np.array:
+        return self._position
 
     @property
     def marker(self) -> LightMarker:
@@ -151,10 +175,10 @@ class Sun(Light, GuiComponentInterface):
         self._indirect_light_enable = indirect_light_enable
 
         # Before calling super we need to set spotlight specific attributes due to _update call
-        super().__init__(scene, "Sun", color, intensity)
+        super().__init__(scene, "Sun", color, intensity=intensity)
 
         # gui
-        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._controls_group = None
 
     def set_azimuth(self, azimuth_deg: float):
         self._azimuth_deg = azimuth_deg
@@ -173,31 +197,34 @@ class Sun(Light, GuiComponentInterface):
         self._scene.enable_indirect_light(indirect_light_enabled)
 
     def build_gui(self):
+        super().build_gui()
+
+        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
         self._controls_group.add_child(gui.Label("Sun light settings"))
         self._controls_group.add_child(Separator())
 
-        self._controls_group.add_child(gui.Label("Azimuth"))
+        self._controls_group.add_child(gui.Label("Azimuth:"))
         azimuth_slider = gui.Slider(gui.Slider.DOUBLE)
         azimuth_slider.set_limits(0.0, self.MAX_AZIMUTH_DEG)
         azimuth_slider.double_value = self._azimuth_deg
         azimuth_slider.set_on_value_changed(self.set_azimuth)
         self._controls_group.add_child(azimuth_slider)
 
-        self._controls_group.add_child(gui.Label("Elevation"))
+        self._controls_group.add_child(gui.Label("Elevation:"))
         elevation_slider = gui.Slider(gui.Slider.DOUBLE)
         elevation_slider.set_limits(0.0, self.MAX_ELEVATION_DEG)
         elevation_slider.double_value = self._elevation_deg
         elevation_slider.set_on_value_changed(self.set_elevation)
         self._controls_group.add_child(elevation_slider)
 
-        self._controls_group.add_child(gui.Label("Intensity"))
+        self._controls_group.add_child(gui.Label("Intensity:"))
         intensity_slider = gui.Slider(gui.Slider.DOUBLE)
         intensity_slider.set_limits(0.0, self.MAX_INTENSITY)
         intensity_slider.double_value = self._intensity
         intensity_slider.set_on_value_changed(self.set_intensity)
         self._controls_group.add_child(intensity_slider)
 
-        self._controls_group.add_child(gui.Label("Color"))
+        self._controls_group.add_child(gui.Label("Color:"))
         color_edit = gui.ColorEdit()
         color_edit.color_value = gui.Color(*self._color, 1.0)
         color_edit.set_on_value_changed(self.set_color)
@@ -216,6 +243,8 @@ class Sun(Light, GuiComponentInterface):
         return self._controls_group
 
     def destroy_gui(self):
+        super().destroy_gui()
+
         if not self._controls_group:
             return
 
@@ -234,19 +263,23 @@ class Sun(Light, GuiComponentInterface):
 
 class PointLight(Light, GuiComponentInterface):
 
-    MAX_FALLOFF = 1000.0
+    MAX_FALLOFF = 100.0
 
     def __init__(
         self,
         scene: rendering.Scene,
         name: str = None,
-        position: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
-        falloff: float = 1000.0,
+        falloff: float = 100.0,
         cast_shadow: bool = True,
     ):
-        self._position = np.array(position, dtype=np.float32)
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._falloff = falloff
         self._cast_shadow = cast_shadow
 
@@ -254,13 +287,17 @@ class PointLight(Light, GuiComponentInterface):
             name = f"pl_{uuid.uuid4().hex[:6]}"
 
         # Before calling super we need to set spotlight specific attributes due to _update call
-        super().__init__(scene, name, color, intensity)
+        super().__init__(scene, name, position, color, intensity)
 
         # gui
-        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._controls_group = None
 
-    def set_position(self, position: Tuple[float, float, float]):
-        self._position = position
+    def set_position(self, position: Union[Tuple[float, float, float], np.ndarray]):
+        self._position = (
+            np.array(position, dtype=np.float32)
+            if isinstance(position, tuple)
+            else position
+        )
         self._marker.set_position(self._position)
         self._update()
 
@@ -273,24 +310,27 @@ class PointLight(Light, GuiComponentInterface):
         self._update()
 
     def build_gui(self):
-        self._controls_group.add_child(gui.Label("Point light settings"))
+        super().build_gui()
+
+        self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._controls_group.add_child(gui.Label("Light settings"))
         self._controls_group.add_child(Separator())
 
-        self._controls_group.add_child(gui.Label("Intensity"))
+        self._controls_group.add_child(gui.Label("Intensity:"))
         intensity_slider = gui.Slider(gui.Slider.DOUBLE)
         intensity_slider.set_limits(0.0, self.MAX_INTENSITY)
         intensity_slider.double_value = self._intensity
         intensity_slider.set_on_value_changed(self.set_intensity)
         self._controls_group.add_child(intensity_slider)
 
-        self._controls_group.add_child(gui.Label("Falloff"))
+        self._controls_group.add_child(gui.Label("Falloff:"))
         falloff_slider = gui.Slider(gui.Slider.DOUBLE)
         falloff_slider.set_limits(0.0, self.MAX_FALLOFF)
         falloff_slider.double_value = self._falloff
         falloff_slider.set_on_value_changed(self.set_falloff)
         self._controls_group.add_child(falloff_slider)
 
-        self._controls_group.add_child(gui.Label("Color"))
+        self._controls_group.add_child(gui.Label("Color:"))
         color_edit = gui.ColorEdit()
         color_edit.color_value = gui.Color(*self._color, 1.0)
         color_edit.set_on_value_changed(self.set_color)
@@ -305,6 +345,13 @@ class PointLight(Light, GuiComponentInterface):
 
     def destroy_gui(self):
         super().destroy_gui()
+
+        if not self._controls_group:
+            return
+
+        for child in self._controls_group.get_children():
+            child.visible = False
+        self._controls_group = None
 
     def destroy(self):
         super().destroy()
@@ -324,10 +371,8 @@ class PointLight(Light, GuiComponentInterface):
 
 class SpotLight(PointLight):
 
-    MIN_YAW = -180.0
-    MAX_YAW = 180.0
-    MIN_PITCH = -90.0
-    MAX_PITCH = 90.0
+    MAX_YAW = 360.0
+    MAX_PITCH = 360.0
     MAX_CONE_ANGLE = 1.0
 
     def __init__(
@@ -335,7 +380,7 @@ class SpotLight(PointLight):
         scene: rendering.Scene,
         name: str = None,
         position: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-        yaw: float = 0.0,
+        yaw: float = 180.0,
         pitch: float = 0.0,
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
@@ -372,30 +417,30 @@ class SpotLight(PointLight):
         self._update()
 
     def build_gui(self):
-        self._controls_group.add_child(super().build_gui())
+        self._controls_group = super().build_gui()
 
-        self._controls_group.add_child(gui.Label("Yaw"))
+        self._controls_group.add_child(gui.Label("Yaw:"))
         yaw_slider = gui.Slider(gui.Slider.DOUBLE)
-        yaw_slider.set_limits(self.MIN_YAW, self.MAX_YAW)
+        yaw_slider.set_limits(0.0, self.MAX_YAW)
         yaw_slider.double_value = self._yaw
         yaw_slider.set_on_value_changed(self.set_yaw)
         self._controls_group.add_child(yaw_slider)
 
-        self._controls_group.add_child(gui.Label("Pitch"))
+        self._controls_group.add_child(gui.Label("Pitch:"))
         pitch_slider = gui.Slider(gui.Slider.DOUBLE)
-        pitch_slider.set_limits(self.MIN_PITCH, self.MAX_PITCH)
+        pitch_slider.set_limits(0.0, self.MAX_PITCH)
         pitch_slider.double_value = self._pitch
         pitch_slider.set_on_value_changed(self.set_pitch)
         self._controls_group.add_child(pitch_slider)
 
-        self._controls_group.add_child(gui.Label("Inner Cone Angle"))
+        self._controls_group.add_child(gui.Label("Inner Cone Angle:"))
         inner_cone_angle_slider = gui.Slider(gui.Slider.DOUBLE)
         inner_cone_angle_slider.set_limits(0.0, self.MAX_CONE_ANGLE)
         inner_cone_angle_slider.double_value = self._inner_cone_angle
         inner_cone_angle_slider.set_on_value_changed(self.set_inner_cone_angle)
         self._controls_group.add_child(inner_cone_angle_slider)
 
-        self._controls_group.add_child(gui.Label("Outer Cone Angle"))
+        self._controls_group.add_child(gui.Label("Outer Cone Angle:"))
         outer_cone_angle_slider = gui.Slider(gui.Slider.DOUBLE)
         outer_cone_angle_slider.set_limits(0.0, self.MAX_CONE_ANGLE)
         outer_cone_angle_slider.double_value = self._outer_cone_angle

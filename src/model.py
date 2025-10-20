@@ -108,7 +108,7 @@ class Model(GuiComponentInterface):
     def destroy_gui(self):
         pass
 
-    def build_gui(self, parent: gui.Widget):
+    def build_gui(self) -> gui.Widget:
         pass
 
     def _update(self):
