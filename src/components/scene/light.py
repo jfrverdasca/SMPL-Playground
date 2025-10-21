@@ -203,8 +203,6 @@ class SunLight(Light, GuiComponentInterface):
         super().build_gui()
 
         self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
-        self._controls_group.add_child(gui.Label("Sun light settings"))
-        self._controls_group.add_child(Separator())
 
         self._controls_group.add_child(gui.Label("Azimuth:"))
         azimuth_slider = gui.Slider(gui.Slider.DOUBLE)
@@ -287,7 +285,7 @@ class PointLight(Light, GuiComponentInterface):
         self._cast_shadow = cast_shadow
 
         if not name:
-            name = f"pl_{uuid.uuid4().hex[:6]}"
+            name = f"point_{uuid.uuid4().hex[:6]}"
 
         # Before calling super we need to set spotlight specific attributes due to _update call
         super().__init__(scene, name, position, color, intensity)
@@ -316,8 +314,6 @@ class PointLight(Light, GuiComponentInterface):
         super().build_gui()
 
         self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
-        self._controls_group.add_child(gui.Label("Light settings"))
-        self._controls_group.add_child(Separator())
 
         self._controls_group.add_child(gui.Label("Intensity:"))
         intensity_slider = gui.Slider(gui.Slider.DOUBLE)
@@ -398,7 +394,7 @@ class SpotLight(PointLight):
         self._outer_cone_angle = outer_cone_angle
 
         if not name:
-            name = f"sl_{uuid.uuid4().hex[:6]}"
+            name = f"spot_{uuid.uuid4().hex[:6]}"
 
         # Before calling super we need to set spotlight specific attributes due to _update call
         super().__init__(scene, name, position, color, intensity, falloff, cast_shadow)

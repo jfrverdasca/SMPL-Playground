@@ -133,6 +133,8 @@ class Model(GuiComponentInterface):
 
         # gui
         self._controls_group = None
+        self._gender_radio_button = None
+        self._age_radio_button = None
 
         self._reload(full_reload=True)
 
@@ -173,22 +175,22 @@ class Model(GuiComponentInterface):
         general_controls_collapsable.set_is_open(True)
 
         general_controls_collapsable.add_child(gui.Label("Gender:"))
-        gender_radio_button = gui.RadioButton(gui.RadioButton.VERT)
-        gender_radio_button.set_items(["Neutral", "Male", "Female"])
-        gender_radio_button.set_on_selection_changed(
-            lambda i: self.set_gender(gender_radio_button.selected_value.lower())
+        self._gender_radio_button = gui.RadioButton(gui.RadioButton.VERT)
+        self._gender_radio_button.set_items(["Neutral", "Male", "Female"])
+        self._gender_radio_button.set_on_selection_changed(
+            lambda i: self.set_gender(self._gender_radio_button.selected_value.lower())
         )
-        gender_radio_button.selected_index = 0
-        general_controls_collapsable.add_child(gender_radio_button)
+        self._gender_radio_button.selected_index = 0
+        general_controls_collapsable.add_child(self._gender_radio_button)
 
         general_controls_collapsable.add_child(gui.Label("Age:"))
-        age_radio_button = gui.RadioButton(gui.RadioButton.VERT)
-        age_radio_button.set_items(["Adult", "Kid"])
-        age_radio_button.set_on_selection_changed(
-            lambda i: self.set_gender(age_radio_button.selected_value.lower())
+        self._age_radio_button = gui.RadioButton(gui.RadioButton.VERT)
+        self._age_radio_button.set_items(["Adult", "Kid"])
+        self._age_radio_button.set_on_selection_changed(
+            lambda i: self.set_gender(self._age_radio_button.selected_value.lower())
         )
-        age_radio_button.selected_index = 0
-        general_controls_collapsable.add_child(age_radio_button)
+        self._age_radio_button.selected_index = 0
+        general_controls_collapsable.add_child(self._age_radio_button)
 
         general_controls_collapsable.add_child(gui.Label("Color"))
         color_edit = gui.ColorEdit()
@@ -261,6 +263,9 @@ class Model(GuiComponentInterface):
         self._update()
 
     def _reload(self, full_reload: bool = False):
+        previous_gender = self._gender
+        previous_age = self._age
+
         gender_args_index = get_args_parameter_index(SMPL, "gender")
         if 0 < gender_args_index < len(self._model_args):
             self._model_args[gender_args_index] = self._gender
@@ -275,7 +280,14 @@ class Model(GuiComponentInterface):
         else:
             self._model_kwargs["age"] = self._age
 
-        self._model = SMPL(*self._model_args, **self._model_kwargs)
+        try:
+            self._model = SMPL(*self._model_args, **self._model_kwargs)
+        except Exception as e:
+            self._gender = previous_gender
+            self._age = previous_age
+
+            raise e
+
         self._faces = self._model.faces.astype(np.int32)
 
         if full_reload:

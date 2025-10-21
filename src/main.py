@@ -1,5 +1,6 @@
 from open3d.visualization import gui, rendering
 
+from components.gui.widgets import ErrorDialog
 from controllers import LightsController, ModelController
 
 
@@ -32,9 +33,11 @@ class SMPLPlayground:
     def run(self):
         try:
             gui.Application.instance.run()
+
         except Exception as e:
-            print(f"An error occurred while running the application: {e}")
-        finally:
+            ErrorDialog(self._window, "Error", str(e)).show()
+
+        else:
             self._print_params_info()
 
     def _on_key_event(self, event: gui.KeyEvent) -> bool:

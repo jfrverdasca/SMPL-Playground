@@ -48,12 +48,18 @@ class LightsController:
         self._parent.add_child(self._remove_light_button)
         self._parent.add_child(Separator())
 
+        sun_controls_collapsable = gui.CollapsableVert("Sun light")
+        sun_controls_collapsable.set_is_open(True)
+
         self._sun = SunLight(self._scene)
-        self._parent.add_child(self._sun.build_gui())
+        sun_controls_collapsable.add_child(self._sun.build_gui())
+        self._parent.add_child(sun_controls_collapsable)
 
         self._parent.add_child(Separator())
 
-        self._current_light_options_panel = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._current_light_options_panel = gui.CollapsableVert("Light controls")
+        self._current_light_options_panel.visible = False
+        self._current_light_options_panel.set_is_open(False)
         self._parent.add_child(self._current_light_options_panel)
 
         self._refresh_layout()
@@ -93,6 +99,8 @@ class LightsController:
 
         self._lights_combobox.enabled = True
         self._remove_light_button.enabled = True
+        self._current_light_options_panel.visible = True
+        self._current_light_options_panel.set_is_open(True)
 
     def _on_selected_light_change(self, text, idx):
         if text in self._lights:
@@ -113,6 +121,8 @@ class LightsController:
         else:
             self._remove_light_button.enabled = False
             self._lights_combobox.enabled = False
+            self._current_light_options_panel.visible = False
+            self._current_light_options_panel.set_is_open(False)
 
         self._refresh_light_combobox(light_name)
         self._refresh_layout()
