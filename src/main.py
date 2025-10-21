@@ -45,9 +45,12 @@ class SMPLPlayground:
 
     def _on_layout(self, context):
         content_rect = self._window.content_rect
-        panel_width = min(340, int(content_rect.width * 0.3))
+        panel_width = min(350, int(content_rect.width * 0.3))
         self._scroll.frame = gui.Rect(
-            content_rect.x, content_rect.y, panel_width, content_rect.height
+            content_rect.x,
+            content_rect.y,
+            panel_width,
+            content_rect.height,
         )
         self._scene_widget.frame = gui.Rect(
             content_rect.x + panel_width,

@@ -26,17 +26,17 @@ class LightsController:
         self._current_light = None
 
         # Components
-        self._point_light_button = gui.Button("Add point light")
+        self._point_light_button = gui.Button("Add point light (A)")
         self._point_light_button.set_on_clicked(lambda: self._add_light("PointLight"))
 
-        self._spot_light_button = gui.Button("Add spot light")
+        self._spot_light_button = gui.Button("Add spot light (S)")
         self._spot_light_button.set_on_clicked(lambda: self._add_light("SpotLight"))
 
         self._lights_combobox = gui.Combobox()
         self._lights_combobox.set_on_selection_changed(self._on_selected_light_change)
         self._lights_combobox.enabled = False
 
-        self._remove_light_button = gui.Button("Remove light")
+        self._remove_light_button = gui.Button("Remove light (D)")
         self._remove_light_button.set_on_clicked(self._remove_current_light)
         self._remove_light_button.enabled = False
 
