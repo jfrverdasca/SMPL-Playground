@@ -17,6 +17,7 @@ class ModelController:
         self._refresh_layout_callback = refresh_layout_callback
 
         self._model = Model(scene, *args, **kwargs)
+        self._parent.add_child(self._model.build_gui())
 
     @property
     def model(self):

@@ -93,6 +93,7 @@ class Light(metaclass=ABCMeta):
         position: Union[Tuple[float, float, float], np.ndarray] = (0.0, 0.0, 0.0),
         color: Tuple[float, float, float] = (1.0, 1.0, 1.0),
         intensity: float = 100000.0,
+        has_marker: bool = True,
     ):
         self._scene = scene
         self._name = name if name else f"l_{uuid.uuid4().hex[:6]}"
@@ -104,15 +105,17 @@ class Light(metaclass=ABCMeta):
         self._color = color
         self._intensity = intensity
 
-        self._marker = LightMarker(
-            self._scene, f"m_{self._name}", position, self._color
-        )
+        if has_marker:
+            self._marker = LightMarker(
+                self._scene, f"m_{self._name}", position, self._color
+            )
 
         self._update()
 
     def destroy(self):
-        self._marker.destroy()
-        self._marker = None
+        if self._marker:
+            self._marker.destroy()
+            self._marker = None
 
         self._scene.remove_light(self._name)
 
@@ -138,7 +141,7 @@ class Light(metaclass=ABCMeta):
 
     def set_scene(self, scene: rendering.Scene):
         self._scene = scene
-        self._marker.set_scene(self._scene)
+        self._marker and self._marker.set_scene(self._scene)
         self._update()
 
     def set_color(self, color: Union[Tuple[float, float, float], gui.Color]):
@@ -146,7 +149,7 @@ class Light(metaclass=ABCMeta):
             color = (color.red, color.green, color.blue)
 
         self._color = color
-        self._marker.set_color(self._color)
+        self._marker and self._marker.set_color(self._color)
         self._update()
 
     def set_intensity(self, intensity: float):
@@ -175,7 +178,7 @@ class SunLight(Light, GuiComponentInterface):
         self._indirect_light_enable = indirect_light_enable
 
         # Before calling super we need to set spotlight specific attributes due to _update call
-        super().__init__(scene, "Sun", color, intensity=intensity)
+        super().__init__(scene, "Sun", color, intensity=intensity, has_marker=False)
 
         # gui
         self._controls_group = None

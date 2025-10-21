@@ -89,6 +89,7 @@ class SMPLPlayground:
 
         # SMPL panel
         self._smpl_panel = gui.Vert(2, gui.Margins(4, 4, 4, 4))
+        self._smpl_panel.visible = False
         self._smpl_controls = ModelController(
             self.scene,
             self._smpl_panel,
