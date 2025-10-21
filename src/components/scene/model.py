@@ -133,8 +133,8 @@ class Model(GuiComponentInterface):
 
         # gui
         self._controls_group = None
-        self._gender_radio_button = None
-        self._age_radio_button = None
+        self._pose_controls_group = None  # needed in model reset
+        self._betas_controls_group = None  # needed in model reset
 
         self._reload(full_reload=True)
 
@@ -170,27 +170,33 @@ class Model(GuiComponentInterface):
 
         self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
 
+        reset_model_button = gui.Button("Reset pose and betas")
+        reset_model_button.set_on_clicked(
+            self._on_reset_model_click
+        )  # TODO: reset sliders too
+        self._controls_group.add_child(reset_model_button)
+
         # General controls
         general_controls_collapsable = gui.CollapsableVert("General settings")
         general_controls_collapsable.set_is_open(True)
 
         general_controls_collapsable.add_child(gui.Label("Gender:"))
-        self._gender_radio_button = gui.RadioButton(gui.RadioButton.VERT)
-        self._gender_radio_button.set_items(["Neutral", "Male", "Female"])
-        self._gender_radio_button.set_on_selection_changed(
-            lambda i: self.set_gender(self._gender_radio_button.selected_value.lower())
+        gender_radio_button = gui.RadioButton(gui.RadioButton.HORIZ)
+        gender_radio_button.set_items(["Neutral", "Male", "Female"])
+        gender_radio_button.set_on_selection_changed(
+            lambda i: self.set_gender(gender_radio_button.selected_value.lower())
         )
-        self._gender_radio_button.selected_index = 0
-        general_controls_collapsable.add_child(self._gender_radio_button)
+        gender_radio_button.selected_index = 0
+        general_controls_collapsable.add_child(gender_radio_button)
 
         general_controls_collapsable.add_child(gui.Label("Age:"))
-        self._age_radio_button = gui.RadioButton(gui.RadioButton.VERT)
-        self._age_radio_button.set_items(["Adult", "Kid"])
-        self._age_radio_button.set_on_selection_changed(
-            lambda i: self.set_gender(self._age_radio_button.selected_value.lower())
+        age_radio_button = gui.RadioButton(gui.RadioButton.HORIZ)
+        age_radio_button.set_items(["Adult", "Kid"])
+        age_radio_button.set_on_selection_changed(
+            lambda i: self.set_gender(age_radio_button.selected_value.lower())
         )
-        self._age_radio_button.selected_index = 0
-        general_controls_collapsable.add_child(self._age_radio_button)
+        age_radio_button.selected_index = 0
+        general_controls_collapsable.add_child(age_radio_button)
 
         general_controls_collapsable.add_child(gui.Label("Color"))
         color_edit = gui.ColorEdit()
@@ -205,9 +211,9 @@ class Model(GuiComponentInterface):
         pose_controls_collapsable = gui.CollapsableVert("Pose parameters")
         pose_controls_collapsable.set_is_open(True)
 
-        pose_controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._pose_controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
         for i, group_name in enumerate(self._GUI_MODEL_PARAMS_GROUPS):
-            pose_controls_group.add_child(gui.Label(group_name))
+            self._pose_controls_group.add_child(gui.Label(group_name))
 
             for j in range(3):
                 param_index = i * 3 + j
@@ -217,9 +223,9 @@ class Model(GuiComponentInterface):
                 pose_slider.set_on_value_changed(
                     lambda v, p_i=param_index: self._on_pose_param_changed(v, p_i)
                 )
-                pose_controls_group.add_child(pose_slider)
+                self._pose_controls_group.add_child(pose_slider)
 
-        pose_controls_collapsable.add_child(pose_controls_group)
+        pose_controls_collapsable.add_child(self._pose_controls_group)
         self._controls_group.add_child(pose_controls_collapsable)
         self._controls_group.add_child(Separator())
 
@@ -227,9 +233,9 @@ class Model(GuiComponentInterface):
         betas_controls_collapsable = gui.CollapsableVert("Shape parameters (Betas)")
         betas_controls_collapsable.set_is_open(True)
 
-        betas_controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._betas_controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
         for i in range(10):
-            betas_controls_group.add_child(gui.Label(f"Beta {i}"))
+            self._betas_controls_group.add_child(gui.Label(f"Beta {i}"))
 
             beta_slider = gui.Slider(gui.Slider.DOUBLE)
             beta_slider.set_limits(-5.0, 5.0)
@@ -237,9 +243,9 @@ class Model(GuiComponentInterface):
             beta_slider.set_on_value_changed(
                 lambda v, b_i=i: self._on_betas_param_changed(v, b_i)
             )
-            betas_controls_group.add_child(beta_slider)
+            self._betas_controls_group.add_child(beta_slider)
 
-        betas_controls_collapsable.add_child(betas_controls_group)
+        betas_controls_collapsable.add_child(self._betas_controls_group)
         self._controls_group.add_child(betas_controls_collapsable)
 
         return self._controls_group
@@ -252,7 +258,33 @@ class Model(GuiComponentInterface):
 
         for child in self._controls_group.children:
             child.visible = False
+
+        self._pose_controls_group = None
+        self._betas_controls_group = None
         self._controls_group = None
+
+    def _on_reset_model_click(self):
+        self._reload(full_reload=True)
+
+        # Reset pose sliders
+        if self._pose_controls_group:
+            i = 0
+            for control in self._pose_controls_group.get_children():
+                if not isinstance(control, gui.Slider):
+                    continue
+
+                control.double_value = self.DEFAULT_SMPL_POSE[i]
+                i += 1
+
+        # Reset betas sliders
+        if self._betas_controls_group:
+            i = 0
+            for control in self._betas_controls_group.get_children():
+                if not isinstance(control, gui.Slider):
+                    continue
+
+                control.double_value = 0.0
+                i += 1
 
     def _on_pose_param_changed(self, value: float, index: int):
         self._pose[0, index] = value
@@ -263,9 +295,6 @@ class Model(GuiComponentInterface):
         self._update()
 
     def _reload(self, full_reload: bool = False):
-        previous_gender = self._gender
-        previous_age = self._age
-
         gender_args_index = get_args_parameter_index(SMPL, "gender")
         if 0 < gender_args_index < len(self._model_args):
             self._model_args[gender_args_index] = self._gender
@@ -280,14 +309,7 @@ class Model(GuiComponentInterface):
         else:
             self._model_kwargs["age"] = self._age
 
-        try:
-            self._model = SMPL(*self._model_args, **self._model_kwargs)
-        except Exception as e:
-            self._gender = previous_gender
-            self._age = previous_age
-
-            raise e
-
+        self._model = SMPL(*self._model_args, **self._model_kwargs)
         self._faces = self._model.faces.astype(np.int32)
 
         if full_reload:

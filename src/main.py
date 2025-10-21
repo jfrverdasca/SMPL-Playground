@@ -35,9 +35,9 @@ class SMPLPlayground:
             gui.Application.instance.run()
 
         except Exception as e:
-            ErrorDialog(self._window, "Error", str(e)).show()
+            print(f"Application error: {e}")
 
-        else:
+        finally:
             self._print_params_info()
 
     def _on_key_event(self, event: gui.KeyEvent) -> bool:
