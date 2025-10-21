@@ -1,8 +1,6 @@
-from typing import Dict, Union
-
 from open3d.visualization import gui, rendering
 
-from gui.controls import LightControls, SMPLControls
+from controllers import LightsController, ModelController
 
 
 class SMPLPlayground:
@@ -84,14 +82,14 @@ class SMPLPlayground:
 
         # Lights panel
         self._lights_panel = gui.Vert(2, gui.Margins(4, 4, 4, 4))
-        self._lights_controls = LightControls(
+        self._lights_controls = LightsController(
             self.scene, self._lights_panel, self._refresh_layout
         )
         self._panel.add_child(self._lights_panel)
 
         # SMPL panel
         self._smpl_panel = gui.Vert(2, gui.Margins(4, 4, 4, 4))
-        self._smpl_controls = SMPLControls(
+        self._smpl_controls = ModelController(
             self.scene,
             self._smpl_panel,
             self._refresh_layout,

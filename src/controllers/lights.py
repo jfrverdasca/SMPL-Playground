@@ -2,13 +2,12 @@ from typing import Literal, Union
 
 from open3d.cpu.pybind.visualization import gui, rendering
 
+from components.gui import Separator
+from components.scene import LightMarker, PointLight, SpotLight, SunLight
 from constants import DEFAULT_LIGHT_POSITION
-from gui.components import Separator
-from light import LightMarker, PointLight, SpotLight, Sun
-from model import Model
 
 
-class LightControls:
+class LightsController:
 
     SELECTED_LIGHT_MARKER_RADIUS = 0.03
     LIGHT_MOVE_STEP = 0.01
@@ -49,7 +48,7 @@ class LightControls:
         self._parent.add_child(self._remove_light_button)
         self._parent.add_child(Separator())
 
-        self._sun = Sun(self._scene)
+        self._sun = SunLight(self._scene)
         self._parent.add_child(self._sun.build_gui())
 
         self._parent.add_child(Separator())
@@ -198,30 +197,6 @@ class LightControls:
             self._current_light_options_panel.add_child(self._current_light.build_gui())
 
         self._refresh_layout()
-
-    def _refresh_layout(self):
-        if self._refresh_layout_callback:
-            self._refresh_layout_callback()
-
-
-class SMPLControls:
-    def __init__(
-        self,
-        scene: rendering.Scene,
-        parent: gui.Widget,
-        refresh_layout_callback: callable,
-        *args,
-        **kwargs,
-    ):
-        self._scene = scene
-        self._parent = parent
-        self._refresh_layout_callback = refresh_layout_callback
-
-        self._model = Model(scene, *args, **kwargs)
-
-    @property
-    def model(self):
-        return self._model
 
     def _refresh_layout(self):
         if self._refresh_layout_callback:

@@ -4,7 +4,7 @@ from open3d.cpu.pybind.visualization import gui, rendering
 from smplx import SMPL
 from sympy.printing.pytorch import torch
 
-from gui.components import GuiComponentInterface
+from components.gui import GuiComponentInterface
 
 
 class Model(GuiComponentInterface):
@@ -86,6 +86,8 @@ class Model(GuiComponentInterface):
     ]
 
     def __init__(self, scene: rendering.Scene, *args, **kwargs):
+        super().__init__()
+
         self._scene = scene
 
         self._model = SMPL(*args, **kwargs)

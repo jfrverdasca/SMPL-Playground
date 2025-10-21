@@ -7,7 +7,7 @@ import open3d as o3d
 from open3d.cpu.pybind.visualization import rendering
 from open3d.visualization import gui
 
-from gui.components import GuiComponentInterface, Separator
+from components.gui import GuiComponentInterface, Separator
 from utils import sphere_dir, yaw_pitch_to_direction
 
 
@@ -154,7 +154,7 @@ class Light(metaclass=ABCMeta):
         self._update()
 
 
-class Sun(Light, GuiComponentInterface):
+class SunLight(Light, GuiComponentInterface):
 
     MAX_AZIMUTH_DEG = 360
     MAX_ELEVATION_DEG = 360
