@@ -1,8 +1,7 @@
-from typing import Dict, Union
-
 from open3d.visualization import gui, rendering
 
-from gui.controls import LightControls, SMPLControls
+from components.gui.widgets import ErrorDialog
+from controllers import LightsController, ModelController
 
 
 class SMPLPlayground:
@@ -34,8 +33,10 @@ class SMPLPlayground:
     def run(self):
         try:
             gui.Application.instance.run()
+
         except Exception as e:
-            print(f"An error occurred while running the application: {e}")
+            print(f"Application error: {e}")
+
         finally:
             self._print_params_info()
 
@@ -44,9 +45,12 @@ class SMPLPlayground:
 
     def _on_layout(self, context):
         content_rect = self._window.content_rect
-        panel_width = min(340, int(content_rect.width * 0.3))
+        panel_width = min(350, int(content_rect.width * 0.3))
         self._scroll.frame = gui.Rect(
-            content_rect.x, content_rect.y, panel_width, content_rect.height
+            content_rect.x,
+            content_rect.y,
+            panel_width,
+            content_rect.height,
         )
         self._scene_widget.frame = gui.Rect(
             content_rect.x + panel_width,
@@ -84,14 +88,15 @@ class SMPLPlayground:
 
         # Lights panel
         self._lights_panel = gui.Vert(2, gui.Margins(4, 4, 4, 4))
-        self._lights_controls = LightControls(
+        self._lights_controls = LightsController(
             self.scene, self._lights_panel, self._refresh_layout
         )
         self._panel.add_child(self._lights_panel)
 
         # SMPL panel
         self._smpl_panel = gui.Vert(2, gui.Margins(4, 4, 4, 4))
-        self._smpl_controls = SMPLControls(
+        self._smpl_panel.visible = False
+        self._smpl_controls = ModelController(
             self.scene,
             self._smpl_panel,
             self._refresh_layout,

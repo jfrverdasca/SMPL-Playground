@@ -2,13 +2,12 @@ from typing import Literal, Union
 
 from open3d.cpu.pybind.visualization import gui, rendering
 
+from components.gui import Separator
+from components.scene import LightMarker, PointLight, SpotLight, SunLight
 from constants import DEFAULT_LIGHT_POSITION
-from gui.components import Separator
-from light import LightMarker, PointLight, SpotLight, Sun
-from model import Model
 
 
-class LightControls:
+class LightsController:
 
     SELECTED_LIGHT_MARKER_RADIUS = 0.03
     LIGHT_MOVE_STEP = 0.01
@@ -27,17 +26,17 @@ class LightControls:
         self._current_light = None
 
         # Components
-        self._point_light_button = gui.Button("Add point light")
+        self._point_light_button = gui.Button("Add point light (A)")
         self._point_light_button.set_on_clicked(lambda: self._add_light("PointLight"))
 
-        self._spot_light_button = gui.Button("Add spot light")
+        self._spot_light_button = gui.Button("Add spot light (S)")
         self._spot_light_button.set_on_clicked(lambda: self._add_light("SpotLight"))
 
         self._lights_combobox = gui.Combobox()
         self._lights_combobox.set_on_selection_changed(self._on_selected_light_change)
         self._lights_combobox.enabled = False
 
-        self._remove_light_button = gui.Button("Remove light")
+        self._remove_light_button = gui.Button("Remove light (D)")
         self._remove_light_button.set_on_clicked(self._remove_current_light)
         self._remove_light_button.enabled = False
 
@@ -49,12 +48,18 @@ class LightControls:
         self._parent.add_child(self._remove_light_button)
         self._parent.add_child(Separator())
 
-        self._sun = Sun(self._scene)
-        self._parent.add_child(self._sun.build_gui())
+        sun_controls_collapsable = gui.CollapsableVert("Sun light")
+        sun_controls_collapsable.set_is_open(True)
+
+        self._sun = SunLight(self._scene)
+        sun_controls_collapsable.add_child(self._sun.build_gui())
+        self._parent.add_child(sun_controls_collapsable)
 
         self._parent.add_child(Separator())
 
-        self._current_light_options_panel = gui.Vert(4, gui.Margins(0, 0, 0, 0))
+        self._current_light_options_panel = gui.CollapsableVert("Light controls")
+        self._current_light_options_panel.visible = False
+        self._current_light_options_panel.set_is_open(False)
         self._parent.add_child(self._current_light_options_panel)
 
         self._refresh_layout()
@@ -94,6 +99,8 @@ class LightControls:
 
         self._lights_combobox.enabled = True
         self._remove_light_button.enabled = True
+        self._current_light_options_panel.visible = True
+        self._current_light_options_panel.set_is_open(True)
 
     def _on_selected_light_change(self, text, idx):
         if text in self._lights:
@@ -114,6 +121,8 @@ class LightControls:
         else:
             self._remove_light_button.enabled = False
             self._lights_combobox.enabled = False
+            self._current_light_options_panel.visible = False
+            self._current_light_options_panel.set_is_open(False)
 
         self._refresh_light_combobox(light_name)
         self._refresh_layout()
@@ -198,30 +207,6 @@ class LightControls:
             self._current_light_options_panel.add_child(self._current_light.build_gui())
 
         self._refresh_layout()
-
-    def _refresh_layout(self):
-        if self._refresh_layout_callback:
-            self._refresh_layout_callback()
-
-
-class SMPLControls:
-    def __init__(
-        self,
-        scene: rendering.Scene,
-        parent: gui.Widget,
-        refresh_layout_callback: callable,
-        *args,
-        **kwargs,
-    ):
-        self._scene = scene
-        self._parent = parent
-        self._refresh_layout_callback = refresh_layout_callback
-
-        self._model = Model(scene, *args, **kwargs)
-
-    @property
-    def model(self):
-        return self._model
 
     def _refresh_layout(self):
         if self._refresh_layout_callback:

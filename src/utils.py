@@ -1,6 +1,9 @@
+import inspect
 import math
+from typing import Any
 
 import numpy as np
+
 
 def sphere_dir(azimuth_deg, elevation_deg):
     az = math.radians(azimuth_deg)
@@ -27,3 +30,11 @@ def yaw_pitch_to_direction(yaw_degree, pitch_degree):
     dx = cp * math.sin(yaw)
     dz = cp * math.cos(yaw)
     return np.array([dx, dy, dz], dtype=np.float32)
+
+
+def get_args_parameter_index(obj: Any, parameter_name: str) -> int:
+    signature = inspect.signature(obj)
+    parameters = list(signature.parameters.keys())
+    if parameter_name in parameters:
+        return parameters.index(parameter_name)
+    return -1
