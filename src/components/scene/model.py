@@ -117,6 +117,7 @@ class Model(GuiComponentInterface):
 
     MIN_POSE_VALUE = -3.14
     MAX_POSE_VALUE = 3.14
+    MIN_BETAS_VALUE = -5.0
     MAX_BETAS_VALUE = 5.0
 
     def __init__(self, scene: rendering.Scene, *args, **kwargs):
@@ -238,7 +239,7 @@ class Model(GuiComponentInterface):
             self._betas_controls_group.add_child(gui.Label(f"Beta {i}"))
 
             beta_slider = gui.Slider(gui.Slider.DOUBLE)
-            beta_slider.set_limits(-5.0, 5.0)
+            beta_slider.set_limits(self.MIN_BETAS_VALUE, self.MAX_BETAS_VALUE)
             beta_slider.double_value = self._betas[0, i].item()
             beta_slider.set_on_value_changed(
                 lambda v, b_i=i: self._on_betas_param_changed(v, b_i)

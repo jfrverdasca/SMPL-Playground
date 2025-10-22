@@ -177,7 +177,8 @@ class SunLight(Light, GuiComponentInterface):
         self._enabled = enabled
         self._indirect_light_enable = indirect_light_enable
 
-        # Before calling super we need to set spotlight specific attributes due to _update call
+        # Before calling supers we need to set spotlight specific attributes due to _update call
+        GuiComponentInterface.__init__(self)
         super().__init__(scene, "Sun", color, intensity=intensity, has_marker=False)
 
         # gui
@@ -287,11 +288,17 @@ class PointLight(Light, GuiComponentInterface):
         if not name:
             name = f"point_{uuid.uuid4().hex[:6]}"
 
-        # Before calling super we need to set spotlight specific attributes due to _update call
+        # Before calling supers we need to set spotlight specific attributes due to _update call
+        GuiComponentInterface.__init__(self)
         super().__init__(scene, name, position, color, intensity)
 
         # gui
         self._controls_group = None
+        self._position_label = gui.Label(
+            f"X: {self._position[0]:.2f}, "
+            f"Y: {self._position[1]:.2f}, "
+            f"Z: {self._position[2]:.2f}"
+        )
 
     def set_position(self, position: Union[Tuple[float, float, float], np.ndarray]):
         self._position = (
@@ -301,6 +308,13 @@ class PointLight(Light, GuiComponentInterface):
         )
         self._marker.set_position(self._position)
         self._update()
+
+        if self._is_gui_built:
+            self._position_label.text = (
+                f"X: {self._position[0]:.2f}, "
+                f"Y: {self._position[1]:.2f}, "
+                f"Z: {self._position[2]:.2f}"
+            )
 
     def set_falloff(self, falloff: float):
         self._falloff = falloff
@@ -339,6 +353,11 @@ class PointLight(Light, GuiComponentInterface):
         cast_shadows_checkbox.checked = self._cast_shadow
         cast_shadows_checkbox.set_on_checked(self.set_cast_shadow)
         self._controls_group.add_child(cast_shadows_checkbox)
+
+        position_label_group = gui.Horiz(2, gui.Margins(0, 0, 0, 0))
+        position_label_group.add_child(gui.Label("Position:"))
+        position_label_group.add_child(self._position_label)
+        self._controls_group.add_child(position_label_group)
 
         return self._controls_group
 
@@ -416,35 +435,40 @@ class SpotLight(PointLight):
         self._update()
 
     def build_gui(self):
-        self._controls_group = super().build_gui()
+        controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
 
-        self._controls_group.add_child(gui.Label("Yaw:"))
+        controls_group.add_child(gui.Label("Yaw:"))
         yaw_slider = gui.Slider(gui.Slider.DOUBLE)
         yaw_slider.set_limits(0.0, self.MAX_YAW)
         yaw_slider.double_value = self._yaw
         yaw_slider.set_on_value_changed(self.set_yaw)
-        self._controls_group.add_child(yaw_slider)
+        controls_group.add_child(yaw_slider)
 
-        self._controls_group.add_child(gui.Label("Pitch:"))
+        controls_group.add_child(gui.Label("Pitch:"))
         pitch_slider = gui.Slider(gui.Slider.DOUBLE)
         pitch_slider.set_limits(0.0, self.MAX_PITCH)
         pitch_slider.double_value = self._pitch
         pitch_slider.set_on_value_changed(self.set_pitch)
-        self._controls_group.add_child(pitch_slider)
+        controls_group.add_child(pitch_slider)
 
-        self._controls_group.add_child(gui.Label("Inner Cone Angle:"))
+        controls_group.add_child(gui.Label("Inner Cone Angle:"))
         inner_cone_angle_slider = gui.Slider(gui.Slider.DOUBLE)
         inner_cone_angle_slider.set_limits(0.0, self.MAX_CONE_ANGLE)
         inner_cone_angle_slider.double_value = self._inner_cone_angle
         inner_cone_angle_slider.set_on_value_changed(self.set_inner_cone_angle)
-        self._controls_group.add_child(inner_cone_angle_slider)
+        controls_group.add_child(inner_cone_angle_slider)
 
-        self._controls_group.add_child(gui.Label("Outer Cone Angle:"))
+        controls_group.add_child(gui.Label("Outer Cone Angle:"))
         outer_cone_angle_slider = gui.Slider(gui.Slider.DOUBLE)
         outer_cone_angle_slider.set_limits(0.0, self.MAX_CONE_ANGLE)
         outer_cone_angle_slider.double_value = self._outer_cone_angle
         outer_cone_angle_slider.set_on_value_changed(self.set_outer_cone_angle)
-        self._controls_group.add_child(outer_cone_angle_slider)
+        controls_group.add_child(outer_cone_angle_slider)
+
+        # First add spotlight specific controls, then add point light controls
+        super_controls_group = super().build_gui()
+        controls_group.add_child(super_controls_group)
+        self._controls_group = controls_group
 
         return self._controls_group
 
