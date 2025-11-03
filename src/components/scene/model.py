@@ -172,9 +172,7 @@ class Model(GuiComponentInterface):
         self._controls_group = gui.Vert(4, gui.Margins(0, 0, 0, 0))
 
         reset_model_button = gui.Button("Reset pose and betas")
-        reset_model_button.set_on_clicked(
-            self._on_reset_model_click
-        )  # TODO: reset sliders too
+        reset_model_button.set_on_clicked(self._on_reset_model_click)
         self._controls_group.add_child(reset_model_button)
 
         # General controls
