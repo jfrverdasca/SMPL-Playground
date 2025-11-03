@@ -15,78 +15,102 @@ class Model(GuiComponentInterface):
 
     DEFAULT_SMPL_COLOR = (0.85, 0.82, 0.80)
     DEFAULT_SMPL_POSE = [
-        0.000,  # 0 - z
-        0.000,  # 1 - y
-        0.000,  # 2 - x
-        0.000,  # 3 - leg left front/back
-        0.000,  # 4 - leg left rotation
-        0.000,  # 5 - leg left left/right
-        0.000,  # 6 - leg right front/back
-        0.000,  # 7 - leg right rotation
-        0.000,  # 8 - leg right left/right
-        0.000,  # 9 - waist (above belly button) front/back
-        0.000,  # 10 - waist (above belly button) rotation
-        0.000,  # 11 - waist (above belly button) left/right
-        0.000,  # 12 - knee left front/back
-        0.000,  # 13 - knee left rotation
-        0.000,  # 14 - knee left left/right
-        0.000,  # 15 - knee right front/back
-        0.000,  # 16 - knee right rotation
-        0.000,  # 17 - knee right left/right
-        0.000,  # 18 - chest front/back   ?
-        0.000,  # 19 - chest rotation     ?
-        0.000,  # 20 - chest left/right   ?
-        0.000,  # 21 - feet left front/back
-        0.300,  # 22 - feet left rotation
-        0.000,  # 23 - feet left left/right
-        0.000,  # 24 - feet right front/back
-        -0.300,  # 25 - feet right rotation
-        0.000,  # 26 - feet right left/right
-        0.000,  # 27 - chest front/back   ?
-        0.000,  # 28 - chest rotation     ?
-        0.000,  # 29 - chest left/right   ?
-        0.000,  # 30 - feet left toes front/back
-        0.000,  # 31 - feet left toes rotation
-        0.000,  # 32 - feet left toes left/right
-        0.000,  # 33 - feet right toes front/back
-        0.000,  # 34 - feet right toes rotation
-        0.000,  # 35 - feet right toes left/right
-        0.000,  # 36 - neck front/back
-        0.000,  # 37 - neck rotation
-        0.000,  # 38 - neck left/right
-        -0.200,  # 39 - shoulder left toes front/back
-        0.000,  # 40 - shoulder left toes rotation
-        -0.200,  # 41 - shoulder left toes left/right
-        -0.200,  # 42 - shoulder right toes front/back
-        0.000,  # 43 - shoulder right toes rotation
-        0.200,  # 44 - shoulder right toes left/right
-        0.000,  # 45 - head front/back
-        0.000,  # 46 - head rotation
-        0.000,  # 47 - head left/right
-        0.000,  # 48 - arm left rotation
-        -0.100,  # 49 - arm left front/back
-        -0.800,  # 50 - arm left left/right
-        0.000,  # 51 - arm right rotation
-        0.100,  # 52 - arm right front/back
-        0.800,  # 53 - arm right left/right
-        0.400,  # 54 - forearm left rotation
-        -0.300,  # 55 - forearm left front/back
-        0.000,  # 56 - forearm left left/right
-        0.400,  # 57 - forearm right rotation
-        0.300,  # 58 - forearm right front/back
-        0.000,  # 59 - forearm right left/right
-        -0.400,  # 60 - wrist left rotation
-        0.000,  # 61 - wrist left front/back
-        0.000,  # 62 - wrist left left/right
-        -0.400,  # 63 - wrist right rotation
-        0.000,  # 64 - wrist right front/back
-        0.000,  # 65 - wrist right left/right
-        0.000,  # 66 - fingers left rotation
-        0.000,  # 67 - fingers left front/back
-        -0.300,  # 68 - fingers left left/right
-        0.000,  # 69 - fingers right rotation
-        0.000,  # 70 - fingers right front/back
-        0.300,  # 71 - fingers right left/right
+        # Global orientation
+        0.000,  # x
+        0.000,  # y
+        0.000,  # z
+        # Left leg
+        0.000,
+        0.000,
+        0.050,
+        # Right leg
+        0.000,
+        0.000,
+        -0.050,
+        # Waist (spine)
+        0.000,
+        0.000,
+        0.000,
+        # Knee left
+        0.000,
+        0.000,
+        -0.100,
+        # Knee right
+        0.000,
+        0.000,
+        0.100,
+        # Belly (spine 1)
+        0.000,
+        0.000,
+        0.000,
+        # Ankle left
+        0.000,
+        0.300,
+        0.000,
+        # Ankle right
+        0.000,
+        -0.300,
+        0.000,
+        # Chest (spine 2)
+        0.000,
+        0.000,
+        0.000,
+        # Feet left toes
+        0.000,
+        0.000,
+        0.000,
+        # Feet right toes
+        0.000,
+        0.000,
+        0.000,
+        # Neck
+        0.000,
+        0.000,
+        0.000,
+        # Shoulder left
+        -0.200,
+        0.000,
+        -0.200,
+        # Shoulder right
+        -0.200,
+        0.000,
+        0.200,
+        # Head
+        0.000,
+        0.000,
+        0.000,
+        # Arm left
+        0.000,
+        -0.100,
+        -1.000,
+        # Arm right
+        0.000,
+        0.100,
+        1.000,
+        # Forearm left
+        0.400,
+        -0.300,
+        0.000,
+        # Forearm right
+        0.400,
+        0.300,
+        0.000,
+        # Wrist left
+        -0.015,
+        0.000,
+        0.000,
+        # Wrist right
+        -0.015,
+        0.000,
+        0.000,
+        # Fingers left
+        0.000,
+        0.000,
+        -0.400,
+        # Fingers right
+        0.000,
+        0.000,
+        0.400,
     ]
     _GUI_MODEL_PARAMS_GROUPS = [
         "Global orientation",
